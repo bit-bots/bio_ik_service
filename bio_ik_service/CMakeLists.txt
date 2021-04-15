@@ -19,6 +19,13 @@ find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
 )
 
+find_package(PythonLibs COMPONENTS Interpreter Development)
+if(PYTHONLIBS_VERSION_STRING VERSION_LESS "3.8")
+    find_package(Boost REQUIRED COMPONENTS python3)
+else()
+    find_package(Boost REQUIRED COMPONENTS python)
+endif()
+
 catkin_package(CATKIN_DEPENDS
   roscpp
   moveit_core
@@ -29,10 +36,18 @@ catkin_package(CATKIN_DEPENDS
   eigen_conversions
 )
 
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+catkin_python_setup()
 
 add_executable(bio_ik_service src/bio_ik_service.cpp)
+target_include_directories(bio_ik_service PRIVATE ${catkin_INCLUDE_DIRS})
 add_dependencies(bio_ik_service ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(bio_ik_service ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_library(bio_ik_python SHARED src/bio_ik_python.cpp)
+target_include_directories(bio_ik_python PRIVATE ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+add_dependencies(bio_ik_python ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(bio_ik_python ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+set_target_properties(bio_ik_python PROPERTIES
+        PREFIX ""
+        LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
